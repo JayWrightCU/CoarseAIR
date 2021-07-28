@@ -254,6 +254,10 @@ Subroutine Compute_N3_NASA_PES_1d( This, R, Q, V, dVdR, dVdQ )
                                                                            ! Terms 2 and 3 are the many-body interaction potential
   !call cpu_time ( t2 )
   !write(*,*) 'Time for Potential Calculations = ', t2-t1
+
+  ! JSW added lines per RLM's email
+  dVdQ = Zero
+  call This%TransToCart_3Atoms( R, Q, dVdR, dVdQ)
                                                                            
 End Subroutine
 !--------------------------------------------------------------------------------------------------------------------------------!
