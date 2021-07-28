@@ -378,6 +378,9 @@ Subroutine Compute_N3_UMN_PES_1d( This, R, Q, V, dVdR, dVdQ )
 
   dVdQ = Zero
 
+  ! JSW added lines per RLM's email
+  call This%TransToCart_3Atoms( R, Q, dVdR, dVdQ)
+
 End Subroutine
 !--------------------------------------------------------------------------------------------------------------------------------!
 
