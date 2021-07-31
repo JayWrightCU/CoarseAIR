@@ -1,0 +1,13 @@
+For downloading github repository to a new local directory:
+
+git clone https://github.com/JayWrightCU/CoarseAIR.git
+
+For pushing changes to github:
+
+git add .
+git commit -m "your comment"
+git push origin master
+
+For pulling changes from github to existing local repository:
+
+git pull origin master
