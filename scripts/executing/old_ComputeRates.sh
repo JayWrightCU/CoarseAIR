@@ -99,6 +99,7 @@ function ComputeTrajsPBS {
     echo "  [ComputeTrajsPBS]: -> Nb of Processes Per Node = "${NProcessesPerNode}
 
   fi
+  
 
   ###########################################################################################################
   ## Customizing ONE .pbs file PER NODE and Submitting EACH of them
@@ -147,140 +148,6 @@ function ComputeTrajsPBS {
 
   done
   echo "  [ComputeTrajsPBS]: Done with Submitting PBS Files for computing Trajectories. Now we have to wait for ALL NODES being done."
-
-      
-}
-#================================================================================================================================#
-
-# ------------------------------------------------------------------------------------------------------------- ComputeTrajsBatch #
-function ComputeTrajsBatch {
-
-  echo "  [ComputeTrajsBatch]: COARSEAIR_OUTPUT_DIR = "${COARSEAIR_OUTPUT_DIR}
-  echo "  [ComputeTrajsBatch]: COARSEAIR_SH_DIR     = "${COARSEAIR_SH_DIR}
-  echo "  [ComputeTrajsBatch]: NNode                = "${NNode}
-  echo "  [ComputeTrajsBatch]: ProcType             = "${ProcType}
-  echo "  [ComputeTrajsBatch]: NProc                = "${NProc}
-  echo "  [ComputeTrajsBatch]: NMolecules           = "${NMolecules}
-  echo "  [ComputeTrajsBatch]: SymmFlg              = "${SymmFlg}
-  echo "  [ComputeTrajsBatch]: NLevels1             = "${NLevels1}
-  echo "  [ComputeTrajsBatch]: MinLevel1            = "${MinLevel1}
-  echo "  [ComputeTrajsBatch]: MaxLevel1            = "${MaxLevel1}
-  echo "  [ComputeTrajsBatch]: NLevels2             = "${NLevels2}
-  echo "  [ComputeTrajsBatch]: MinLevel2            = "${MinLevel2}
-  echo "  [ComputeTrajsBatch]: MaxLevel2            = "${MaxLevel2}
-  
-
-  ###########################################################################################################
-  ## Copying the .sh (batch) Template locally
-  ## 
-  cd ${COARSEAIR_OUTPUT_DIR}/..
-  scp ${COARSEAIR_SH_DIR}/../launching/RunTrajectories-Format-Summit.sh    ./
-
-  ###########################################################################################################
-  ## Finding out how many PROCESSES we are required to compute and how many per NODE 
-  ## 
-  if [ ${MinLevel1} -eq 0 -a ${MinLevel2} -eq 0 ]; then 
-
-    ###########################################################################################################
-    ## Reading the Process List from ProcessesToRunList.inp
-    ## 
-    echo "  [ComputeTrajsBatch]: Reading Levels/Bins from File "${COARSEAIR_INPUT_DIR}/ProcessesToRunList.inp
-    NProcessesFromFile=$(($(wc -l < "${COARSEAIR_INPUT_DIR}/ProcessesToRunList.inp")))
-    echo "  [ComputeTrajsBatch]: -> Total Nb of Processes to Run = "${NProcessesFromFile}
-
-    NProcessesPerNode="$(bc <<< "scale = 10; ${NProcessesFromFile} / ${NNode}")"
-    NProcessesPerNode="$(echo ${NProcessesPerNode} | awk '{print ($0-int($0)>0)?int($0)+1:int($0)}')"
-    echo "  [ComputeTrajsBatch]: -> Nb of Processes Per Node = "${NProcessesPerNode}
-
-    MaxProcessAll=${NProcessesFromFile}
-    MinProcessAll=1
-
-  else
-
-    ###########################################################################################################
-    ## Selecting the Processes to Run in Increasing Order
-    if [ ${NMolecules} -eq 1 ]; then 
-        MinProcessAll=${MinLevel1}
-        MaxProcessAll=${MaxLevel1}
-    else
-      if [ ${SymmFlg} -eq 1 ]; then
-        NMin=$(( ${NLevels1} - ${MinLevel1} + 1 ))
-        NMax=${NLevels1}
-        NBetw=$(( (${NMax}+1)*(${NMax})/2 - (${NMin}+1)*(${NMin})/2 ))
-        MinProcessAll=$(( ${NBetw}+1 ))
-        NMin=$(( ${NLevels1} - ${MaxLevel1} ))
-        NMax=$(( ${NLevels1} - ${MinLevel1} + 1 ))
-        NBetw=$(( (${NMax}+1)*(${NMax})/2 - (${NMin}+1)*(${NMin})/2 ))
-        NProcessesAll=${NBetw}
-        MaxProcessAll=$(( ${MinProcessAll} + ${NProcessesAll} - 1 ))
-      else
-        MinProcessAll=$(( $((${MinLevel1} - 1)) * ${NLevels2} + ${MinLevel2} ))
-        MaxProcessAll=$(( $((${MaxLevel1} - 1)) * ${NLevels2} + ${MaxLevel2} ))
-      fi
-    fi
-    NProcessesAll=$(( ${MaxProcessAll} - ${MinProcessAll} + 1 ))
-    echo "  [ComputeTrajsBatch]: -> Total Nb of Processes to Run = "${NProcessesAll}
-
-    NProcessesPerNode="$(bc <<< "scale = 10; ${NProcessesAll} / ${NNode}")"
-    NProcessesPerNode="$(echo ${NProcessesPerNode} | awk '{print ($0-int($0)>0)?int($0)+1:int($0)}')"
-    echo "  [ComputeTrajsBatch]: -> Nb of Processes Per Node = "${NProcessesPerNode}
-
-  fi
-  
-
-  ###########################################################################################################
-  ## Customizing ONE .sh file PER NODE and Submitting EACH of them
-  ## 
-  for (( iNode=1; iNode<=${NNode}; iNode++ )); do
-
-    MinProcessInNode=$(( ${MinProcessAll} + $((iNode-1))*NProcessesPerNode ))
-    if [ ${MinProcessInNode} -le ${MaxProcessAll} ]; then 
-      MaxProcessInNode=$(( ${MinProcessAll} + ${iNode}*NProcessesPerNode - 1))
-      if [ ${MaxProcessInNode} -gt ${MaxProcessAll} ]; then 
-        MaxProcessInNode=${MaxProcessAll}
-      fi
-      echo "  [ComputeTrajsBatch]: For Node "${iNode}", the first Process to be Computed is the "${MinProcessInNode}"-th"
-      echo "  [ComputeTrajsBatch]: For Node "${iNode}", the last  Process to be Computed is the "${MaxProcessInNode}"-th"
-
-      echo "  [ComputeTrajsBatch]: -> iNode = "${iNode}"; MinProcessInNode = "${MinProcessInNode}"; MaxProcessInNode = "${MaxProcessInNode}
-              
-
-      sed -e '2s/$/'${Queue}'/'        'RunTrajectories-Format-Summit.sh' > 'RunTrajectoriesTEMP-A.sh'
-      sed -e '3s/$/'${ProcType}'/'     'RunTrajectoriesTEMP-A.sh'  > 'RunTrajectoriesTEMP-B.sh'
-      sed -e '4s/$/1/'                 'RunTrajectoriesTEMP-B.sh'  > 'RunTrajectoriesTEMP-C.sh'
-      sed -e '5s/$/'${NProc}'/'        'RunTrajectoriesTEMP-C.sh'  > 'RunTrajectoriesTEMP-D.sh'
-      
-      if [[ ${ProcType} == *testing ]]; then
-          sed -e '7s/$/00:30:00/'             'RunTrajectoriesTEMP-D.sh'         > 'RunTrajectoriesTEMP-1.sh'
-      else
-          sed -e '7s/$/'${WallTime}':00:00/'  'RunTrajectoriesTEMP-D.sh'         > 'RunTrajectoriesTEMP-1.sh'
-      fi
-
-      sed -e '14s/$/'${NProc}'/'                                  'RunTrajectoriesTEMP-1.sh'  > 'RunTrajectoriesTEMP-2.sh'
-
-      sed -e '15s/$/'${SlncFlg}'/'                                'RunTrajectoriesTEMP-2.sh'  > 'RunTrajectoriesTEMP-3.sh'
-      sed -e '16s/$/'${MergeAllFlg}'/'                            'RunTrajectoriesTEMP-3.sh'  > 'RunTrajectoriesTEMP-4.sh'
-      sed -e '17s/$/'${RmTrajFlg}'/'                              'RunTrajectoriesTEMP-4.sh'  > 'RunTrajectoriesTEMP-5.sh'
-      sed -e '18s/$/'${BinaryTrajFlg}'/'                          'RunTrajectoriesTEMP-5.sh'  > 'RunTrajectoriesTEMP-6.sh'
-
-      sed -e '6s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'RunTrajectoriesTEMP-6.sh'  > 'RunTrajectoriesTEMP-7.sh'
-      sed -e '8s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'RunTrajectoriesTEMP-7.sh'  > 'RunTrajectoriesTEMP-8.sh'
-
-      sed -e '148s/$/'${MinProcessInNode}'/'                      'RunTrajectoriesTEMP-8.sh'  > 'RunTrajectoriesTEMP-9.sh' 
-      sed -e '149s/$/'${MaxProcessInNode}'/'                      'RunTrajectoriesTEMP-9.sh'  > 'RunTrajectoriesTEMP-10.sh' 
-
-      sed -e '150s/$/'${Tran}'/'                                  'RunTrajectoriesTEMP-10.sh' > 'RunTrajectoriesTEMP-11.sh' 
-      sed -e '151s/$/'${Tint}'/'                                  'RunTrajectoriesTEMP-11.sh' > 'RunTrajectoriesTEMP-12.sh'
-      sed -e '152s/$/'${iNode}'/'                                 'RunTrajectoriesTEMP-12.sh' > 'RunTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
-
-      sbatch 'RunTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
-      echo 'HERE IS WHERE I WOULD LAUNCH TRAJECTORIES ...'
-
-      rm -rf ./RunTrajectoriesTEMP*    
-    fi
-
-  done
-  echo "  [ComputeTrajsBatch]: Done with Submitting Batch Files for computing Trajectories. Now we have to wait for ALL NODES being done."
 
       
 }
@@ -727,6 +594,8 @@ function PostTrajectoriesPBS {
     echo "  [PostTrajectoriesPBS]: -> Nb of Processes Per Node = "${NProcessesPerNode}
 
   fi
+  
+
   ###########################################################################################################
   ## Customizing ONE .pbs file PER NODE and Submitting EACH of them
   ## 
@@ -767,137 +636,6 @@ function PostTrajectoriesPBS {
       sed -e '152s/$/'${iNode}'/'                                    'PostTrajectoriesTEMP-12.pbs' > 'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.pbs'
 
       qsub ./'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.pbs'
-
-      rm -rf ./PostTrajectoriesTEMP*
-    fi
-
-  done
-  echo "  [PostTrajectoriesPBS]: Done with Submitting PBS Files for Postprocessing Trajectories. Now we have to wait for ALL NODES being done."
-      
-
-}
-#================================================================================================================================#
-#================================================================================================================================#  
-
-
-# ------------------------------------------------------------------------------------------------------------------------------ #
-#----------------------------------------------------------------------------------------------------------- PostTrajectoriesBatch #
-function PostTrajectoriesBatch {
-
-  echo "  [PostTrajectoriesBatch]: COARSEAIR_OUTPUT_DIR = "${COARSEAIR_OUTPUT_DIR}
-  echo "  [PostTrajectoriesBatch]: COARSEAIR_SH_DIR     = "${COARSEAIR_SH_DIR}
-  echo "  [PostTrajectoriesBatch]: NNode                = "${NNode}
-  echo "  [PostTrajectoriesBatch]: ProcType             = "${ProcType}
-  echo "  [PostTrajectoriesBatch]: NProc                = "${NProc}
-  echo "  [PostTrajectoriesBatch]: NMolecules           = "${NMolecules}
-  echo "  [PostTrajectoriesBatch]: MinLevel1            = "${MinLevel1}
-  echo "  [PostTrajectoriesBatch]: MaxLevel1            = "${MaxLevel1}
-  echo "  [PostTrajectoriesBatch]: MinLevel2            = "${MinLevel2}
-  echo "  [PostTrajectoriesBatch]: MaxLevel2            = "${MaxLevel2}
-  echo "  [PostTrajectoriesBatch]: BinaryTrajFlg        = "${BinaryTrajFlg}
-
-
-  ###########################################################################################################
-  ## Copying the .sh Template locally
-  ## 
-  cd ${COARSEAIR_OUTPUT_DIR}/..
-  scp ${COARSEAIR_SH_DIR}/../launching/PostTrajectories-Format-Summit.sh     ./
-
-  ###########################################################################################################
-  ## Finding out how many PROCESSES we are required to compute and how many per NODE 
-  ## 
-  if [ ${MinLevel1} -eq 0 -a ${MinLevel2} -eq 0 ]; then 
-    
-    ###########################################################################################################
-    ## Reading the Process List from ProcessesToRunList.inp
-    ## 
-
-    echo "  [PostTrajectoriesBatch]: Reading Levels/Bins from File "${COARSEAIR_INPUT_DIR}/ProcessesToRunList.inp
-    NProcessesFromFile=$(($(wc -l < "${COARSEAIR_INPUT_DIR}/ProcessesToRunList.inp")))
-    echo "  [PostTrajectoriesBatch]: -> Total Nb of Processes to Run = "${NProcessesFromFile}
-
-    NProcessesPerNode="$(bc <<< "scale = 10; ${NProcessesFromFile} / ${NNode}")"
-    NProcessesPerNode="$(echo ${NProcessesPerNode} | awk '{print ($0-int($0)>0)?int($0)+1:int($0)}')"
-    echo "  [PostTrajectoriesBatch]: -> Nb of Processes Per Node = "${NProcessesPerNode}
-
-    MinProcessAll=1
-    MaxProcessAll=${NProcessesFromFile}
-
-  else
-    
-
-    if [ ${NMolecules} -eq 1 ]; then 
-        MinProcessAll=${MinLevel1}
-        MaxProcessAll=${MaxLevel1}
-    else
-    if [ ${SymmFlg} -eq 1 ]; then
-        NMin=$(( ${NLevels1} - ${MinLevel1} + 1 ))
-        NMax=${NLevels1}
-        NBetw=$(( (${NMax}+1)*(${NMax})/2 - (${NMin}+1)*(${NMin})/2 ))
-        MinProcessAll=$(( ${NBetw}+1 ))
-        NMin=$(( ${NLevels1} - ${MaxLevel1} ))
-        NMax=$(( ${NLevels1} - ${MinLevel1} + 1 ))
-        NBetw=$(( (${NMax}+1)*(${NMax})/2 - (${NMin}+1)*(${NMin})/2 ))
-        NProcessesAll=${NBetw}
-        MaxProcessAll=$(( ${MinProcessAll} + ${NProcessesAll} - 1 ))
-      else
-        MinProcessAll=$(( $((${MinLevel1} - 1)) * ${NLevels2} + ${MinLevel2} ))
-        MaxProcessAll=$(( $((${MaxLevel1} - 1)) * ${NLevels2} + ${MaxLevel2} ))
-      fi
-    fi
-    NProcessesAll=$(( ${MaxProcessAll} - ${MinProcessAll} + 1 ))
-    echo "  [PostTrajectoriesBatch]: -> Total Nb of Processes to Run = "${NProcessesAll}
-
-    NProcessesPerNode="$(bc <<< "scale = 10; ${NProcessesAll} / ${NNode}")"
-    NProcessesPerNode="$(echo ${NProcessesPerNode} | awk '{print ($0-int($0)>0)?int($0)+1:int($0)}')"
-    echo "  [PostTrajectoriesBatch]: -> Nb of Processes Per Node = "${NProcessesPerNode}
-
-  fi
-  
-
-  ###########################################################################################################
-  ## Customizing ONE .sh file PER NODE and Submitting EACH of them
-  ## 
-  for (( iNode=1; iNode<=${NNode}; iNode++ )); do
-
-    MinProcessInNode=$(( ${MinProcessAll} + $((${iNode}-1))*NProcessesPerNode     ))
-    if [ ${MinProcessInNode} -le ${MaxProcessAll} ]; then 
-      MaxProcessInNode=$(( ${MinProcessAll} +        ${iNode}*NProcessesPerNode - 1 ))
-      if [ ${MaxProcessInNode} -gt ${MaxProcessAll} ]; then 
-        MaxProcessInNode=${MaxProcessAll}
-      fi
-      
-      echo "  [PostTrajectoriesBatch]: -> iNode = "${iNode}"; MinProcessInNode = "${MinProcessInNode}"; MaxProcessInNode = "${MaxProcessInNode}
-
-      sed -e '2s/$/'${Queue}'/'        'PostTrajectories-Format-Summit.sh' > 'PostTrajectoriesTEMP-A.sh'
-      sed -e '3s/$/'${ProcType}'/'     'PostTrajectoriesTEMP-A.sh'  > 'PostTrajectoriesTEMP-B.sh'
-      sed -e '4s/$/1/'                 'PostTrajectoriesTEMP-B.sh'  > 'PostTrajectoriesTEMP-C.sh'
-      sed -e '5s/$/'${NProc}'/'        'PostTrajectoriesTEMP-C.sh'  > 'PostTrajectoriesTEMP-D.sh'
-      
-      if [[ ${ProcType} == *testing ]]; then
-          sed -e '7s/$/00:30:00/'             'PostTrajectoriesTEMP-D.sh'         > 'PostTrajectoriesTEMP-1.sh'
-      else
-          sed -e '7s/$/'${WallTime}':00:00/'  'PostTrajectoriesTEMP-D.sh'         > 'PostTrajectoriesTEMP-1.sh'
-      fi
-
-      sed -e '14s/$/'${NProc}'/'                                  'PostTrajectoriesTEMP-1.sh'  > 'PostTrajectoriesTEMP-2.sh'
-
-      sed -e '15s/$/'${SlncFlg}'/'                                'PostTrajectoriesTEMP-2.sh'  > 'PostTrajectoriesTEMP-3.sh'
-      sed -e '16s/$/'${MergeAllFlg}'/'                            'PostTrajectoriesTEMP-3.sh'  > 'PostTrajectoriesTEMP-4.sh'
-      sed -e '17s/$/'${RmTrajFlg}'/'                              'PostTrajectoriesTEMP-4.sh'  > 'PostTrajectoriesTEMP-5.sh'
-      sed -e '18s/$/'${BinaryTrajFlg}'/'                          'PostTrajectoriesTEMP-5.sh'  > 'PostTrajectoriesTEMP-6.sh'
-
-      sed -e '6s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'PostTrajectoriesTEMP-6.sh'  > 'PostTrajectoriesTEMP-7.sh'
-      sed -e '8s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'PostTrajectoriesTEMP-7.sh'  > 'PostTrajectoriesTEMP-8.sh'
-
-      sed -e '148s/$/'${MinProcessInNode}'/'                      'PostTrajectoriesTEMP-8.sh'  > 'PostTrajectoriesTEMP-9.sh' 
-      sed -e '149s/$/'${MaxProcessInNode}'/'                      'PostTrajectoriesTEMP-9.sh'  > 'PostTrajectoriesTEMP-10.sh' 
-
-      sed -e '150s/$/'${Tran}'/'                                  'PostTrajectoriesTEMP-10.sh' > 'PostTrajectoriesTEMP-11.sh' 
-      sed -e '151s/$/'${Tint}'/'                                  'PostTrajectoriesTEMP-11.sh' > 'PostTrajectoriesTEMP-12.sh'
-      sed -e '152s/$/'${iNode}'/'                                 'PostTrajectoriesTEMP-12.sh' > 'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
-
-      sbatch 'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
 
       rm -rf ./PostTrajectoriesTEMP*
     fi
