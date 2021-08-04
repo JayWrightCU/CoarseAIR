@@ -266,15 +266,25 @@ function ComputeTrajsBatch {
       sed -e '6s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'RunTrajectoriesTEMP-6.sh'  > 'RunTrajectoriesTEMP-7.sh'
       sed -e '8s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'RunTrajectoriesTEMP-7.sh'  > 'RunTrajectoriesTEMP-8.sh'
 
-      sed -e '148s/$/'${MinProcessInNode}'/'                      'RunTrajectoriesTEMP-8.sh'  > 'RunTrajectoriesTEMP-9.sh' 
-      sed -e '149s/$/'${MaxProcessInNode}'/'                      'RunTrajectoriesTEMP-9.sh'  > 'RunTrajectoriesTEMP-10.sh' 
+      FortranModule2=${FortranModule//'/'/'\/'}
+      OpenBlasModule2=${OpenBlasModule//'/'/'\/'}
+      HDF5Module2=${HDF5Module//'/'/'\/'}
+      gslmodule2=${gslmodule//'/'/'\/'}
+      fgslmodule2=${fgslmodule//'/'/'\/'}
+      cmakemodule2=${cmakemodule//'/'/'\/'}
+      parallelmodule2=${parallelmodule//'/'/'\/'}
+      pythonmodule2=${pythonmodule//'/'/'\/'}
 
-      sed -e '150s/$/'${Tran}'/'                                  'RunTrajectoriesTEMP-10.sh' > 'RunTrajectoriesTEMP-11.sh' 
-      sed -e '151s/$/'${Tint}'/'                                  'RunTrajectoriesTEMP-11.sh' > 'RunTrajectoriesTEMP-12.sh'
-      sed -e '152s/$/'${iNode}'/'                                 'RunTrajectoriesTEMP-12.sh' > 'RunTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
+      sed -e '25s/$/ '${FortranModule2}' '${OpenBlasModule2}' '${HDF5Module2}' '${gslmodule2}' '${fgslmodule2}' '${cmakemodule2}' '${parallelmodule2}' '${pythonmodule2}' /'   'RunTrajectoriesTEMP-8.sh'  > 'RunTrajectoriesTEMP-9.sh'
+      
+      sed -e '149s/$/'${MinProcessInNode}'/'                      'RunTrajectoriesTEMP-9.sh'  > 'RunTrajectoriesTEMP-10.sh' 
+      sed -e '150s/$/'${MaxProcessInNode}'/'                      'RunTrajectoriesTEMP-10.sh'  > 'RunTrajectoriesTEMP-11.sh' 
+
+      sed -e '151s/$/'${Tran}'/'                                  'RunTrajectoriesTEMP-11.sh' > 'RunTrajectoriesTEMP-12.sh' 
+      sed -e '152s/$/'${Tint}'/'                                  'RunTrajectoriesTEMP-12.sh' > 'RunTrajectoriesTEMP-13.sh'
+      sed -e '153s/$/'${iNode}'/'                                 'RunTrajectoriesTEMP-13.sh' > 'RunTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
 
       sbatch 'RunTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
-      echo 'HERE IS WHERE I WOULD LAUNCH TRAJECTORIES ...'
 
       rm -rf ./RunTrajectoriesTEMP*    
     fi
@@ -890,12 +900,23 @@ function PostTrajectoriesBatch {
       sed -e '6s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'PostTrajectoriesTEMP-6.sh'  > 'PostTrajectoriesTEMP-7.sh'
       sed -e '8s/$/'${MinProcessInNode}'_'${MaxProcessInNode}'/'  'PostTrajectoriesTEMP-7.sh'  > 'PostTrajectoriesTEMP-8.sh'
 
-      sed -e '148s/$/'${MinProcessInNode}'/'                      'PostTrajectoriesTEMP-8.sh'  > 'PostTrajectoriesTEMP-9.sh' 
-      sed -e '149s/$/'${MaxProcessInNode}'/'                      'PostTrajectoriesTEMP-9.sh'  > 'PostTrajectoriesTEMP-10.sh' 
+      FortranModule2=${FortranModule//'/'/'\/'}
+      OpenBlasModule2=${OpenBlasModule//'/'/'\/'}
+      HDF5Module2=${HDF5Module//'/'/'\/'}
+      gslmodule2=${gslmodule//'/'/'\/'}
+      fgslmodule2=${fgslmodule//'/'/'\/'}
+      cmakemodule2=${cmakemodule//'/'/'\/'}
+      parallelmodule2=${parallelmodule//'/'/'\/'}
+      pythonmodule2=${pythonmodule//'/'/'\/'}
 
-      sed -e '150s/$/'${Tran}'/'                                  'PostTrajectoriesTEMP-10.sh' > 'PostTrajectoriesTEMP-11.sh' 
-      sed -e '151s/$/'${Tint}'/'                                  'PostTrajectoriesTEMP-11.sh' > 'PostTrajectoriesTEMP-12.sh'
-      sed -e '152s/$/'${iNode}'/'                                 'PostTrajectoriesTEMP-12.sh' > 'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
+      sed -e '25s/$/ '${FortranModule2}' '${OpenBlasModule2}' '${HDF5Module2}' '${gslmodule2}' '${fgslmodule2}' '${cmakemodule2}' '${parallelmodule2}' '${pythonmodule2}' /'   'PostTrajectoriesTEMP-8.sh'  > 'PostTrajectoriesTEMP-9.sh'
+
+      sed -e '149s/$/'${MinProcessInNode}'/'                      'PostTrajectoriesTEMP-9.sh'  > 'PostTrajectoriesTEMP-10.sh' 
+      sed -e '150s/$/'${MaxProcessInNode}'/'                      'PostTrajectoriesTEMP-10.sh' > 'PostTrajectoriesTEMP-11.sh' 
+
+      sed -e '151s/$/'${Tran}'/'                                  'PostTrajectoriesTEMP-11.sh' > 'PostTrajectoriesTEMP-12.sh' 
+      sed -e '152s/$/'${Tint}'/'                                  'PostTrajectoriesTEMP-12.sh' > 'PostTrajectoriesTEMP-13.sh'
+      sed -e '153s/$/'${iNode}'/'                                 'PostTrajectoriesTEMP-13.sh' > 'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
 
       sbatch 'PostTrajectories-'${MinProcessInNode}'-'${MaxProcessInNode}'.sh'
 

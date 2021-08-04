@@ -21,15 +21,7 @@
 #===============================================================================================================
 
 # ---  LOADING MODULES  ------------------------------------------------ #
-module purge
-module load gcc/10.2.0 
-module load openblas/0.3.15/gcc/10.2.0
-module load hdf5/1.12.1/gcc/10.2.0
-module load gsl/2.5/gcc/10.2.0
-module load fgsl/1.4.0/gsl/2.5/gcc/10.2.0
-module load cmake/3.20.2
-module load gnu_parallel/20210322
-source /curc/sw/anaconda3/latest
+# source /curc/sw/anaconda3/latest
 #------------------------------------------------------------------------#
 
 # ---  PARAMETERS ------------------------------------------------------ #
@@ -48,11 +40,32 @@ ProcType='shas-testing'                                                  # Only 
 Queue='normal'                                                           # Only for Clusters; 'normal'/'long'/'condo'
 WallTime=1                                                               # Only for Clusters; WallTime in hours (e.g., 120)
 JobSub='batch'                                                           # Only for Clusters: 'batch'/'pbs'
-NProc=20                                                                 # Nb of Processors
+NProc=24                                                                 # Nb of Processors
 SlncFlg=0                                                                # =1 -> Silencing Bash File Echoes
 MergeAllFlg=0                                                            # =1 -> Merging All the ASCI Traj Files in 1 File
 RmTrajFlg=0                                                              # =1 -> Removing Traj Files from Single Processors
 BinaryTrajFlg=0                                                          # =1 -> Statistics Reads Binary Traj Files
+# Inputs for CU Clusters (set modules)
+FortranModule='gcc/10.2.0'
+OpenBlasModule='openblas/0.3.15/gcc/10.2.0'
+HDF5Module='hdf5/1.12.1/gcc/10.2.0'
+gslmodule='gsl/2.5/gcc/10.2.0'
+fgslmodule='fgsl/1.4.0/gsl/2.5/gcc/10.2.0'
+cmakemodule='cmake/3.20.2'
+parallelmodule='gnu_parallel/20210322'
+pythonmodule='python/3.6.5'
+#------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------#
+module purge
+module load $FortranModule
+module load $OpenBlasModule
+module load $HDF5Module
+module load $gslmodule
+module load $fgslmodule
+module load $cmakemodule
+module load $parallelmodule
+module load $pythonmodule
 #------------------------------------------------------------------------#
 
 # ---  PATHS ----------------------------------------------------------- #

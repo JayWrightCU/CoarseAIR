@@ -21,7 +21,8 @@ BinaryTrajFlg=
 
 # ---  MODULES ---------------------------------------------------------------------------------- #
 source ~/.bash_profile
-coarseairmodules
+module purge
+module load 
 COARSEAIR_UPDATE
 COARSEAIR_release
 #-------------------------------------------------------------------------------------------------#
