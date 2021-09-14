@@ -28,7 +28,7 @@ COARSEAIR_release
 #-------------------------------------------------------------------------------------------------#
 
 # ---  PATHS ------------------------------------------------------------------------------------ #
-export RUN_DIR=$SCRATCH_PATH/workspace/coarseair
+export RUN_DIR=/projects/jowr7027/CoarseAIR/N3_Regression #jsw edited to run in my proj dir
 export COARSEAIR_WORKING_DIR=${RUN_DIR}
 export COARSEAIR_INPUT_DIR=${RUN_DIR}/input
 export COARSEAIR_INPUT_FILE=${RUN_DIR}/input/CoarseAIR.inp
